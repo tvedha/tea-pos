@@ -15,21 +15,25 @@ export const QuickBillScreen: React.FC = () => {
 
   const totalAmount = billItems.reduce((sum, item) => sum + item.total, 0);
 
-  const handleAddQuickAmount = (amount: string) => {
-    const parsedAmount = parseFloat(amount);
-    if (!parsedAmount || parsedAmount <= 0) return;
+  // Inside QuickBillScreen.tsx
+const handleAddQuickAmount = (input: string) => {
+  // input is coming in as "2*10"
+  const [qStr, pStr] = input.split('*');
+  const quantity = parseFloat(qStr);
+  const rate = parseFloat(pStr);
 
-    const description = `Quick Entry ${new Date().toLocaleTimeString()}`;
-    const newItem: BillItem = {
-      id: Date.now().toString(),
-      description,
-      quantity: 1,
-      rate: parsedAmount,
-      total: parsedAmount,
-    };
+  if (isNaN(rate) || rate <= 0) return;
 
-    setBillItems([...billItems, newItem]);
+  const newItem: BillItem = {
+    id: Date.now().toString(),
+    description: `Item @ ${formatCurrency(rate)}`,
+    quantity: quantity,
+    rate: rate,
+    total: quantity * rate,
   };
+
+  setBillItems([newItem, ...billItems]);
+};
 
   const handleDeleteItem = (id: string) => {
     setBillItems(billItems.filter((item) => item.id !== id));
