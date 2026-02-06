@@ -7,6 +7,7 @@ import { supabase } from '../services/supabase';
 import { colors, spacing } from '../constants/theme';
 import { formatCurrency, getTodayStartEnd } from '../utils/dateUtils';
 import { DailyStats } from '../types/database';
+import { IconButton } from 'react-native-paper';
 
 export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -21,10 +22,19 @@ export const DashboardScreen: React.FC = () => {
   const [snackbar, setSnackbar] = useState({ visible: false, message: '' });
 
   useFocusEffect(
-    React.useCallback(() => {
-      fetchTodayStats();
-    }, [])
-  );
+  React.useCallback(() => {
+    // Manually add the menu button to the header
+    navigation.setOptions({
+      headerLeft: () => (
+        <IconButton
+          icon="menu"
+          onPress={() => (navigation as any).openDrawer()}
+        />
+      ),
+    });
+    fetchTodayStats();
+  }, [navigation])
+);
 
   const fetchTodayStats = async () => {
     try {

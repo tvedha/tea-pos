@@ -1,114 +1,180 @@
 import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { DrawerContentScrollView, DrawerItemList, DrawerContentComponentProps } from '@react-navigation/drawer';
-import { Text, Divider, Button, Avatar } from 'react-native-paper';
-import { useAuth } from '../contexts/AuthContext';
+import { View, StyleSheet } from 'react-native';
+import { 
+  Drawer as PaperDrawer, 
+  Avatar, 
+  Text, 
+  Divider, 
+  useTheme,
+  Surface,
+  TouchableRipple
+} from 'react-native-paper';
+import { 
+  DrawerContentComponentProps, 
+  DrawerContentScrollView 
+} from '@react-navigation/drawer';
 import { colors, spacing } from '../constants/theme';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useAuth } from '../contexts/AuthContext'; // Added back
 
-export function DrawerContent(props: DrawerContentComponentProps) {
-  const { user, signOut } = useAuth();
+export const CustomDrawerContent = (props: DrawerContentComponentProps) => {
+  const theme = useTheme();
+  const { state, navigation } = props;
+  const { signOut, user } = useAuth(); // Destructure auth functions
+  
+  const activeRouteName = state.routeNames[state.index];
 
-  const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        onPress: async () => {
-          try {
-            await signOut();
-          } catch (error: any) {
-            Alert.alert('Error', error.message || 'Logout failed');
-          }
-        },
-        style: 'destructive',
-      },
-    ]);
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <DrawerContentScrollView {...props}>
-        <View style={styles.header}>
-          <View style={styles.profileSection}>
-            <Avatar.Icon
-              size={56}
-              icon="account-circle"
-              style={{ backgroundColor: colors.primary }}
-            />
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>
-                {user?.email?.split('@')[0] || 'Shop Owner'}
+    <View style={{ flex: 1, backgroundColor: colors.surface }}>
+      <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 0 }}>
+        
+        {/* Header Section with User Info */}
+        <Surface style={styles.headerSection} elevation={1}>
+          <Avatar.Icon 
+            size={54} 
+            icon="account" 
+            style={{ backgroundColor: colors.primary }} 
+            color="white" 
+          />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.brandName}>Tea POS</Text>
+            {user?.email && (
+              <Text numberOfLines={1} style={styles.userEmail}>
+                {user.email}
               </Text>
-              <Text style={styles.userEmail}>{user?.email || 'loading...'}</Text>
-            </View>
+            )}
           </View>
+        </Surface>
+
+        <View style={styles.drawerContent}>
+          <PaperDrawer.Section title="Main Menu" showDivider={false}>
+            <PaperDrawer.Item
+              icon="view-dashboard"
+              label="Dashboard"
+              active={activeRouteName === 'Dashboard'}
+              onPress={() => navigation.navigate('Dashboard')}
+              style={styles.drawerItem}
+            />
+            <PaperDrawer.Item
+              icon="calculator"
+              label="Quick Bill"
+              active={activeRouteName === 'BillTabNavigator'}
+              onPress={() => navigation.navigate('BillTabNavigator', { screen: 'QuickBill' })}
+              style={styles.drawerItem}
+            />
+            <PaperDrawer.Item
+              icon="food-outline"
+              label="Products"
+              active={activeRouteName === 'Products'}
+              onPress={() => navigation.navigate('Products')}
+              style={styles.drawerItem}
+            />
+          </PaperDrawer.Section>
+
+          <Divider style={styles.divider} />
+
+          <PaperDrawer.Section title="Analytics" showDivider={false}>
+            <PaperDrawer.Item
+              icon="file-chart"
+              label="Reports"
+              onPress={() => navigation.navigate('BillTabNavigator', { screen: 'BillReport' })}
+              style={styles.drawerItem}
+            />
+            <PaperDrawer.Item
+              icon="account-group"
+              label="Customers"
+              active={activeRouteName === 'Customers'}
+              onPress={() => navigation.navigate('Customers')}
+              style={styles.drawerItem}
+            />
+          </PaperDrawer.Section>
+
+          <Divider style={styles.divider} />
+
+          <PaperDrawer.Section showDivider={false}>
+            <PaperDrawer.Item
+              icon="cog"
+              label="Settings"
+              active={activeRouteName === 'Settings'}
+              onPress={() => navigation.navigate('Settings')}
+              style={styles.drawerItem}
+            />
+          </PaperDrawer.Section>
         </View>
-
-        <Divider style={styles.divider} />
-
-        <DrawerItemList {...props} />
       </DrawerContentScrollView>
 
-      <View style={styles.footer}>
-        <Button
-          mode="outlined"
+      {/* Logout & Footer Section */}
+      <View style={styles.footerSection}>
+        <PaperDrawer.Item
+          icon="logout"
+          label="Sign Out"
           onPress={handleLogout}
-          style={styles.logoutButton}
-          labelStyle={styles.logoutLabel}
-          icon={() => <MaterialCommunityIcons name="logout" size={20} color={colors.primary} />}
-        >
-          Logout
-        </Button>
+          style={[styles.drawerItem, { backgroundColor: '#fff5f5' }]}
+        />
+        <View style={styles.versionContainer}>
+          <Text style={styles.versionText}>v1.0.4 Beta</Text>
+        </View>
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    paddingVertical: spacing.lg,
+  headerSection: {
+    paddingVertical: spacing.xl,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomColor: colors.border,
-    borderBottomWidth: 1,
-  },
-  profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginBottom: spacing.sm,
   },
-  userInfo: {
+  headerTextContainer: {
+    marginLeft: spacing.md,
     flex: 1,
   },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
+  brandName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.primary,
   },
   userEmail: {
     fontSize: 12,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: 2,
+  },
+  drawerContent: {
+    flex: 1,
+  },
+  drawerItem: {
+    borderRadius: 8,
+    marginVertical: 2,
+    marginHorizontal: spacing.sm,
   },
   divider: {
-    backgroundColor: colors.border,
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+    height: 0.5,
   },
-  footer: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderTopColor: colors.border,
+  footerSection: {
+    paddingBottom: spacing.md,
     borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  logoutButton: {
-    borderColor: colors.primary,
+  versionContainer: {
+    alignItems: 'center',
+    marginTop: spacing.sm,
   },
-  logoutLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+  versionText: {
+    fontSize: 10,
+    color: colors.textSecondary,
   },
 });
