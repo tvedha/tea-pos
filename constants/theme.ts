@@ -1,53 +1,58 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
+import { MD3DarkTheme } from 'react-native-paper';
 
-import { Platform } from 'react-native';
+export const colors = {
+  primary: '#FF6B35', // Saffron/Orange
+  secondary: '#00695C', // Teal
+  background: '#121212',
+  surface: '#1E1E1E',
+  text: '#F5F5F5',
+  textSecondary: '#E0E0E0',
+  error: '#CF6679',
+  success: '#4CAF50',
+  warning: '#FFC107',
+  white: '#FFFFFF',
+  black: '#000000',
+  border: '#333333',
+  disabled: '#666666',
+  overlay: 'rgba(0, 0, 0, 0.5)',
+};
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+export const theme = {
+  ...MD3DarkTheme,
+  colors: {
+    ...MD3DarkTheme.colors,
+    primary: colors.primary,
+    secondary: colors.secondary,
+    tertiary: colors.secondary,
+    background: colors.background,
+    surface: colors.surface,
+    onSurface: colors.text,
+    surfaceVariant: colors.surface,
   },
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+};
+
+export const borderRadius = {
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+};
+
+export const typography = {
+  h1: { fontSize: 32, fontWeight: 'bold' },
+  h2: { fontSize: 28, fontWeight: 'bold' },
+  h3: { fontSize: 24, fontWeight: '600' },
+  h4: { fontSize: 20, fontWeight: '600' },
+  body1: { fontSize: 16, fontWeight: '400' },
+  body2: { fontSize: 14, fontWeight: '400' },
+  caption: { fontSize: 12, fontWeight: '400' },
+  button: { fontSize: 16, fontWeight: '500' },
+};
