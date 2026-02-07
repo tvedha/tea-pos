@@ -141,7 +141,7 @@ export const DashboardScreen: React.FC = () => {
           labelStyle={styles.buttonLabel}
           onPress={() => {
             console.log('Quick Bill pressed - Navigating to BillTabNavigator');
-            navigation.navigate('BillTabNavigator', { screen: 'QuickBill' });
+            navigation.navigate('Billing', { screen: 'QuickBill' });
           }}
         >
           Quick Bill
@@ -152,7 +152,7 @@ export const DashboardScreen: React.FC = () => {
           labelStyle={styles.buttonLabel}
           onPress={() => {
             console.log('View Report pressed - Navigating to BillReport');
-            navigation.navigate('BillTabNavigator', { screen: 'BillReport' });
+            navigation.navigate('Billing', { screen: 'BillReport' });
           }}
         >
           View Report
