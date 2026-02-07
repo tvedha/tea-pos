@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   displayBox: { flex: 1, backgroundColor: colors.background, padding: 8, borderRadius: 8, borderWidth: 2, borderColor: 'transparent' },
   activeBox: { borderColor: colors.primary, backgroundColor: '#f0f7ff' },
   label: { fontSize: 10, color: colors.textSecondary, fontWeight: 'bold' },
-  valueText: { fontSize: 22, fontWeight: 'bold', color: colors.primary, textAlign: 'right' },
+  valueText: { fontSize: 12, fontWeight: 'bold', color: colors.primary, textAlign: 'right' },
   multiplierSymbol: { fontSize: 20, fontWeight: 'bold', color: colors.textSecondary },
   grid: { marginBottom: spacing.xs },
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },

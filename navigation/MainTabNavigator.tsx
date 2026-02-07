@@ -17,7 +17,7 @@ import { CustomersScreen } from '../screens/CustomersScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 
 // Drawer Menu
-import { DrawerContent } from './DrawerContent';
+import { CustomDrawerContent } from './DrawerContent';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -134,7 +134,7 @@ const DrawerNavigatorWithMenu = () => {
 
   return (
     <Drawer.Navigator
-      drawerContent={DrawerContent}
+      drawerContent={CustomDrawerContent}
       screenOptions={{
         ...screenOptions,
         headerShown: true,
