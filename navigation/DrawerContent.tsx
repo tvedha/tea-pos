@@ -66,7 +66,7 @@ export const CustomDrawerContent = (props: DrawerContentComponentProps) => {
               icon="calculator"
               label="Quick Bill"
               active={activeRouteName === 'BillTabNavigator'}
-              onPress={() => navigation.navigate('BillTabNavigator', { screen: 'QuickBill' })}
+              onPress={() => navigation.navigate('Billing', { screen: 'QuickBill' })}
               style={styles.drawerItem}
             />
             <PaperDrawer.Item
@@ -84,7 +84,7 @@ export const CustomDrawerContent = (props: DrawerContentComponentProps) => {
             <PaperDrawer.Item
               icon="file-chart"
               label="Reports"
-              onPress={() => navigation.navigate('BillTabNavigator', { screen: 'BillReport' })}
+              onPress={() => navigation.navigate('Billing', { screen: 'BillReport' })}
               style={styles.drawerItem}
             />
             <PaperDrawer.Item
@@ -116,7 +116,7 @@ export const CustomDrawerContent = (props: DrawerContentComponentProps) => {
           icon="logout"
           label="Sign Out"
           onPress={handleLogout}
-          style={[styles.drawerItem, { backgroundColor: '#fff5f5' }]}
+          style={[styles.drawerItem, { backgroundColor: '#171111' }]}
         />
         <View style={styles.versionContainer}>
           <Text style={styles.versionText}>v1.0.4 Beta</Text>

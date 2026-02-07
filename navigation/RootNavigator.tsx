@@ -9,16 +9,14 @@ const Stack = createNativeStackNavigator();
 export const RootNavigator: React.FC = () => {
   const { session, loading } = useAuth();
 
-  if (loading) {
-    return null; // Splash screen or loading indicator could be shown here
-  }
+  if (loading) return null;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {session ? (
-        <Stack.Screen name="Main" component={MainTabNavigator} />
-      ) : (
+      {!session ? (
         <Stack.Screen name="Login" component={LoginScreen} />
+      ) : (
+        <Stack.Screen name="Main" component={MainTabNavigator} />
       )}
     </Stack.Navigator>
   );
