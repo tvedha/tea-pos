@@ -177,7 +177,7 @@ export const ItemWiseBillScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {/* Category Filter */}
-      <ScrollView
+      {/* <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.categoryScroll}
@@ -200,7 +200,7 @@ export const ItemWiseBillScreen: React.FC = () => {
             {cat}
           </Chip>
         ))}
-      </ScrollView>
+      </ScrollView> */}
 
       {/* Products Grid */}
       {loading ? (
