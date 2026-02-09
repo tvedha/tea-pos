@@ -1,12 +1,15 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { endOfDay, startOfDay } from 'date-fns';
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Card, IconButton, Snackbar, Text } from 'react-native-paper';
 import { colors, spacing } from '../constants/theme';
 import { supabase } from '../services/supabase';
 import { DailyStats } from '../types/database';
-import { formatCurrency, getTodayStartEnd } from '../utils/dateUtils';
+import { formatCurrency, formatDate } from '../utils/dateUtils';
 
 export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -19,28 +22,43 @@ export const DashboardScreen: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ visible: false, message: '' });
+  // Added for feature 1: Dashboard calendar date picker
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useFocusEffect(
-  React.useCallback(() => {
-    // Manually add the menu button to the header
-    navigation.setOptions({
-      headerLeft: () => (
-        <IconButton
-          icon="menu"
-          onPress={() => (navigation as any).openDrawer()}
-        />
-      ),
-    });
-    fetchTodayStats();
-  }, [navigation])
-);
+    React.useCallback(() => {
+      // Manually add the menu button to the header
+      navigation.setOptions({
+        headerLeft: () => (
+          <IconButton
+            icon="menu"
+            onPress={() => (navigation as any).openDrawer()}
+          />
+        ),
+        // Added for feature 1: Calendar icon button in header
+        headerRight: () => (
+          <IconButton
+            icon="calendar"
+            onPress={() => setShowDatePicker(true)}
+            style={{ marginRight: 10 }}
+          />
+        ),
+      });
+      fetchStats(selectedDate);
+    }, [navigation, selectedDate])
+  );
 
-  const fetchTodayStats = async () => {
+  // Added for feature 1: Fetch stats for selected date
+  const fetchStats = async (date: Date) => {
     try {
       setLoading(true);
-      const { start, end } = getTodayStartEnd();
+      const TIMEZONE = 'Asia/Kolkata';
+      const zonedDate = utcToZonedTime(date, TIMEZONE);
+      const start = zonedTimeToUtc(startOfDay(zonedDate), TIMEZONE).toISOString();
+      const end = zonedTimeToUtc(endOfDay(zonedDate), TIMEZONE).toISOString();
 
-      // Fetch today's transactions
+      // Fetch transactions for selected date
       const { data: transactions, error: txnError } = await supabase
         .from('transactions')
         .select('*')
@@ -78,6 +96,8 @@ export const DashboardScreen: React.FC = () => {
         itemCount: items?.length || 0,
         transactionCount: transactions?.length || 0,
       });
+
+      console.log(`✓ Dashboard stats loaded for ${formatDate(date)}`);
     } catch (error: any) {
       setSnackbar({ visible: true, message: error.message || 'Failed to load stats' });
     } finally {
@@ -85,12 +105,31 @@ export const DashboardScreen: React.FC = () => {
     }
   };
 
+  // Added for feature 1: Handle date picker change
+  const handleDateChange = (event: any, date?: Date) => {
+    setShowDatePicker(false);
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.title}>Dashboard</Text>
-        <Text style={styles.subtitle}>Today's Summary</Text>
+        {/* Added for feature 1: Display selected date */}
+        <Text style={styles.subtitle}>{formatDate(selectedDate)}</Text>
       </View>
+
+      {/* Added for feature 1: Date picker modal */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="spinner"
+          onChange={handleDateChange}
+        />
+      )}
 
       <Card style={styles.card}>
         <Card.Content>
