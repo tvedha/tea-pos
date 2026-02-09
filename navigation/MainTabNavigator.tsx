@@ -9,6 +9,8 @@ import { colors } from '../constants/theme';
 import { BillReportScreen } from '../screens/BillReportScreen';
 import { CustomersScreen } from '../screens/CustomersScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
+import { ExpensesScreen } from '../screens/ExpensesScreen';
+import { InventoryScreen } from '../screens/InventoryScreen';
 import { ItemWiseBillScreen } from '../screens/ItemWiseBillScreen';
 import { ProductsScreen } from '../screens/ProductsScreen';
 import { QuickBillScreen } from '../screens/QuickBillScreen';
@@ -91,6 +93,10 @@ export const MainTabNavigator = () => {
       />
       <Drawer.Screen name="Products" component={ProductsScreen} />
       <Drawer.Screen name="Customers" component={CustomersScreen} />
+      {/* Added for feature 5: Expenses route */}
+      <Drawer.Screen name="Expenses" component={ExpensesScreen} />
+      {/* Added for feature 6: Inventory route */}
+      <Drawer.Screen name="Inventory" component={InventoryScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
     </Drawer.Navigator>
   );

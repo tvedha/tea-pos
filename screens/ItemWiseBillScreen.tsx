@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, FlatList, Alert } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { Alert, FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import {
+  ActivityIndicator,
   Button,
   Card,
-  Text,
-  Snackbar,
   DataTable,
-  Chip,
   IconButton,
-  ActivityIndicator,
+  SegmentedButtons,
+  Snackbar,
+  Text
 } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
-import { supabase } from '../services/supabase';
 import { colors, spacing } from '../constants/theme';
+import { supabase } from '../services/supabase';
+import { BillItem, Product } from '../types/database';
 import { formatCurrency } from '../utils/dateUtils';
-import { Product, BillItem } from '../types/database';
 
 type Category = 'ALL' | 'Tea' | 'Biscuit' | 'Lunch' | 'Milk';
 
@@ -26,6 +26,8 @@ export const ItemWiseBillScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ visible: false, message: '' });
+  // Added for feature 4: Payment mode selector
+  const [paymentMode, setPaymentMode] = useState<'cash' | 'gpay'>('cash');
 
   const categories: Category[] = ['ALL', 'Tea', 'Biscuit', 'Lunch', 'Milk'];
 
@@ -135,7 +137,7 @@ export const ItemWiseBillScreen: React.FC = () => {
         .insert({
           bill_type: 'products',
           total_amount: totalAmount,
-          payment_mode: 'cash',
+          payment_mode: paymentMode,
         })
         .select()
         .single();
@@ -164,6 +166,7 @@ export const ItemWiseBillScreen: React.FC = () => {
       });
 
       setCartItems([]);
+      console.log(`✓ Item Wise Bill saved with ${paymentMode} payment mode`);
     } catch (error: any) {
       setSnackbar({
         visible: true,
@@ -291,6 +294,24 @@ export const ItemWiseBillScreen: React.FC = () => {
             </View>
           </View>
         </Card>
+
+        {/* Added for feature 4: Payment Mode Selector */}
+        {cartItems.length > 0 && (
+          <Card style={styles.paymentCard}>
+            <Card.Content>
+              <Text style={styles.paymentLabel}>Payment Mode</Text>
+              <SegmentedButtons
+                value={paymentMode}
+                onValueChange={(value) => setPaymentMode(value as 'cash' | 'gpay')}
+                buttons={[
+                  { value: 'cash', label: 'Cash', icon: 'cash' },
+                  { value: 'gpay', label: 'GPay', icon: 'google-pay' },
+                ]}
+                style={styles.segmentedButtons}
+              />
+            </Card.Content>
+          </Card>
+        )}
 
         {/* Actions */}
         <View style={styles.actions}>
@@ -428,8 +449,23 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
     borderColor: colors.primary,
     borderWidth: 2,
+  },  // Added for feature 4: Payment mode styles
+  paymentCard: {
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+    borderColor: colors.border,
+    borderWidth: 1,
   },
-  summaryContent: {
+  paymentLabel: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  segmentedButtons: {
+    marginBottom: 0,
+  },  summaryContent: {
     padding: spacing.md,
   },
   summaryLabel: {

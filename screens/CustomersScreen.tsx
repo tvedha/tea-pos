@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Modal, FlatList } from 'react-native';
-import { Button, Card, Text, TextInput, Snackbar, ActivityIndicator, IconButton, DataTable } from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
-import { supabase } from '../services/supabase';
+import { endOfDay, startOfDay } from 'date-fns';
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
+import React, { useState } from 'react';
+import { FlatList, Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Button, Card, DataTable, IconButton, Searchbar, Snackbar, Text, TextInput } from 'react-native-paper';
 import { colors, spacing } from '../constants/theme';
-import { formatCurrency } from '../utils/dateUtils';
-import { Customer, BulkLedger } from '../types/database';
+import { supabase } from '../services/supabase';
+import { BulkLedger, Customer } from '../types/database';
+import { formatCurrency, formatDate } from '../utils/dateUtils';
 
 type TabType = 'customers' | 'settlement';
 
@@ -16,6 +19,8 @@ export const CustomersScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [snackbar, setSnackbar] = useState({ visible: false, message: '' });
+  // Added for feature 2: Search functionality
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -28,6 +33,13 @@ export const CustomersScreen: React.FC = () => {
     quantity: '',
     pricePerUnit: '',
   });
+
+  // Added for feature 3: Settlement screen improvements
+  const [settlementCustomerId, setSettlementCustomerId] = useState('');
+  const [settlementFromDate, setSettlementFromDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)));
+  const [settlementToDate, setSettlementToDate] = useState(new Date());
+  const [showFromDatePicker, setShowFromDatePicker] = useState(false);
+  const [showToDatePicker, setShowToDatePicker] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -137,6 +149,46 @@ export const CustomersScreen: React.FC = () => {
   const unsettledEntries = bulkLedgers.filter((entry) => !entry.settled);
   const unsettledTotal = unsettledEntries.reduce((sum, entry) => sum + entry.total_amount, 0);
 
+  // Added for feature 2: Filter customers based on search query
+  const filteredCustomers = customers.filter((customer) =>
+    customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (customer.phone && customer.phone.includes(searchQuery))
+  );
+
+  // Added for feature 3: Handle settlement date picker changes
+  const handleSettlementFromDateChange = (event: any, date?: Date) => {
+    setShowFromDatePicker(false);
+    if (date) {
+      setSettlementFromDate(date);
+    }
+  };
+
+  const handleSettlementToDateChange = (event: any, date?: Date) => {
+    setShowToDatePicker(false);
+    if (date) {
+      setSettlementToDate(date);
+    }
+  };
+
+  // Added for feature 3: Filter settlement entries based on customer and date range
+  const getFilteredSettlementEntries = () => {
+    const TIMEZONE = 'Asia/Kolkata';
+    const fromZoned = utcToZonedTime(settlementFromDate, TIMEZONE);
+    const toZoned = utcToZonedTime(settlementToDate, TIMEZONE);
+    const startTime = zonedTimeToUtc(startOfDay(fromZoned), TIMEZONE).toISOString();
+    const endTime = zonedTimeToUtc(endOfDay(toZoned), TIMEZONE).toISOString();
+
+    return bulkLedgers.filter((entry) => {
+      const entryTime = entry.created_at;
+      const matchesCustomer = !settlementCustomerId || entry.customer_id === settlementCustomerId;
+      const matchesDateRange = entryTime >= startTime && entryTime <= endTime;
+      return matchesCustomer && matchesDateRange && !entry.settled;
+    });
+  };
+
+  const filteredSettlementEntries = getFilteredSettlementEntries();
+  const settlementTotal = filteredSettlementEntries.reduce((sum, entry) => sum + entry.total_amount, 0);
+
   return (
     <View style={styles.container}>
       {/* Tab Buttons */}
@@ -161,7 +213,7 @@ export const CustomersScreen: React.FC = () => {
         // Customers Tab
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>Customers ({customers.length})</Text>
+            <Text style={styles.title}>Customers ({filteredCustomers.length})</Text>
             <Button
               mode="contained"
               onPress={() => {
@@ -174,6 +226,14 @@ export const CustomersScreen: React.FC = () => {
             </Button>
           </View>
 
+          {/* Added for feature 2: Search bar for customers */}
+          <Searchbar
+            placeholder="Search by name or phone..."
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchBar}
+          />
+
           {loading ? (
             <ActivityIndicator
               style={styles.loader}
@@ -181,13 +241,13 @@ export const CustomersScreen: React.FC = () => {
               size="large"
               color={colors.primary}
             />
-          ) : customers.length === 0 ? (
+          ) : filteredCustomers.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No customers yet</Text>
+              <Text style={styles.emptyText}>{searchQuery ? 'No customers found' : 'No customers yet'}</Text>
             </View>
           ) : (
             <FlatList
-              data={customers}
+              data={filteredCustomers}
               scrollEnabled={true}
               contentContainerStyle={styles.listContent}
               renderItem={({ item: customer }) => (
@@ -212,12 +272,72 @@ export const CustomersScreen: React.FC = () => {
       ) : (
         // Settlement Tab
         <ScrollView style={styles.content} contentContainerStyle={styles.contentPadding}>
-          {/* Unsettled Summary */}
+          {/* Added for feature 3: Pending Settlement Summary with Filters */}
           <Card style={styles.summaryCard}>
             <Card.Content>
               <Text style={styles.summaryLabel}>Pending Settlement</Text>
-              <Text style={styles.summaryAmount}>{formatCurrency(unsettledTotal)}</Text>
-              <Text style={styles.summaryCount}>{unsettledEntries.length} entries</Text>
+              <Text style={styles.summaryAmount}>{formatCurrency(settlementTotal)}</Text>
+              <Text style={styles.summaryCount}>{filteredSettlementEntries.length} entries</Text>
+            </Card.Content>
+          </Card>
+
+          {/* Added for feature 3: Settlement Filters */}
+          <Card style={styles.formCard}>
+            <Card.Title title="Filter by" />
+            <Card.Content>
+              {/* Customer Selector */}
+              <Text style={styles.formLabel}>Select Customer (all if empty):</Text>
+              <FlatList
+                data={customers}
+                horizontal
+                scrollEnabled={true}
+                contentContainerStyle={styles.customerList}
+                renderItem={({ item }) => (
+                  <Button
+                    mode={settlementCustomerId === item.id ? 'contained' : 'outlined'}
+                    onPress={() => setSettlementCustomerId(settlementCustomerId === item.id ? '' : item.id)}
+                    style={styles.customerButton}
+                  >
+                    {item.name.substring(0, 10)}
+                  </Button>
+                )}
+                keyExtractor={(item) => item.id}
+              />
+
+              {/* Date Range Pickers */}
+              <Text style={styles.formLabel}>From Date:</Text>
+              <Button
+                mode="outlined"
+                onPress={() => setShowFromDatePicker(true)}
+                style={styles.dateButton}
+              >
+                {formatDate(settlementFromDate)}
+              </Button>
+              {showFromDatePicker && (
+                <DateTimePicker
+                  value={settlementFromDate}
+                  mode="date"
+                  display="spinner"
+                  onChange={handleSettlementFromDateChange}
+                />
+              )}
+
+              <Text style={styles.formLabel}>To Date:</Text>
+              <Button
+                mode="outlined"
+                onPress={() => setShowToDatePicker(true)}
+                style={styles.dateButton}
+              >
+                {formatDate(settlementToDate)}
+              </Button>
+              {showToDatePicker && (
+                <DateTimePicker
+                  value={settlementToDate}
+                  mode="date"
+                  display="spinner"
+                  onChange={handleSettlementToDateChange}
+                />
+              )}
             </Card.Content>
           </Card>
 
@@ -276,10 +396,10 @@ export const CustomersScreen: React.FC = () => {
             <Text style={styles.listTitle}>Pending Entries</Text>
           </View>
 
-          {unsettledEntries.length === 0 ? (
+          {filteredSettlementEntries.length === 0 ? (
             <Card style={styles.emptyCard}>
               <Card.Content>
-                <Text style={styles.emptyText}>All settled!</Text>
+                <Text style={styles.emptyText}>{settlementTotal === 0 ? 'All settled!' : 'No entries match filters'}</Text>
               </Card.Content>
             </Card>
           ) : (
@@ -295,7 +415,7 @@ export const CustomersScreen: React.FC = () => {
                 <DataTable.Title style={styles.tableCol4}>Action</DataTable.Title>
               </DataTable.Header>
 
-              {unsettledEntries.map((entry) => {
+              {filteredSettlementEntries.map((entry) => {
                 const customer = customers.find((c) => c.id === entry.customer_id);
                 return (
                   <DataTable.Row key={entry.id} style={styles.tableRow}>
@@ -428,6 +548,12 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     borderBottomWidth: 1,
   },
+  // Added for feature 2: Search bar styling
+  searchBar: {
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+    backgroundColor: colors.surface,
+  },
   title: {
     fontSize: 18,
     fontWeight: '600',
@@ -517,6 +643,11 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   input: {
+    marginBottom: spacing.md,
+    backgroundColor: colors.background,
+  },
+  // Added for feature 3: Date button styling
+  dateButton: {
     marginBottom: spacing.md,
     backgroundColor: colors.background,
   },

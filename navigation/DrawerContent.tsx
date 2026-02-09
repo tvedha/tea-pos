@@ -90,6 +90,26 @@ export const CustomDrawerContent = (props: DrawerContentComponentProps) => {
           </PaperDrawer.Section>
                     <Divider style={styles.divider} />
 
+          {/* Added for feature 5: Expenses menu item */}
+          <PaperDrawer.Section title="Operations" showDivider={false}>
+            <PaperDrawer.Item
+              icon="cash-remove"
+              label="Expenses"
+              active={activeRouteName === 'Expenses'}
+              onPress={() => navigation.navigate('Expenses')}
+              style={styles.drawerItem}
+            />
+            {/* Added for feature 6: Inventory menu item */}
+            <PaperDrawer.Item
+              icon="package-variant"
+              label="Inventory"
+              active={activeRouteName === 'Inventory'}
+              onPress={() => navigation.navigate('Inventory')}
+              style={styles.drawerItem}
+            />
+          </PaperDrawer.Section>
+                    <Divider style={styles.divider} />
+
 
           <PaperDrawer.Section title="Analytics" showDivider={false}>
             <PaperDrawer.Item

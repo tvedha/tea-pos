@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
-import { Button, Card, Text, DataTable, Divider, ActivityIndicator } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
-import { supabase } from '../services/supabase';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { endOfDay, startOfDay } from 'date-fns';
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
+import React, { useState } from 'react';
+import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Card, DataTable, Divider, IconButton, SegmentedButtons, Text } from 'react-native-paper';
 import { colors, spacing } from '../constants/theme';
-import { formatCurrency, formatTimeIST, getTodayStartEnd } from '../utils/dateUtils';
+import { supabase } from '../services/supabase';
 import { Transaction } from '../types/database';
+import { formatCurrency, formatDate, formatTimeIST } from '../utils/dateUtils';
 
 export const BillReportScreen: React.FC = () => {
+  const navigation = useNavigation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -17,10 +21,26 @@ export const BillReportScreen: React.FC = () => {
     gpayTotal: 0,
     transactionCount: 0,
   });
+  // Added for feature 1: Bill Report calendar date picker
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  // Added for feature 8: Payment mode filter
+  const [paymentFilter, setPaymentFilter] = useState<'all' | 'cash' | 'gpay'>('all');
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchTodayReport();
+      // Added for feature 1: Setup header with calendar icon
+      navigation.setOptions({
+        headerRight: () => (
+          <IconButton
+            icon="calendar"
+            onPress={() => setShowDatePicker(true)}
+            style={{ marginRight: 10 }}
+          />
+        ),
+      });
+
+      fetchReport(selectedDate);
       // Subscribe to realtime updates
       const subscription = supabase
         .channel('transactions_channel')
@@ -28,7 +48,7 @@ export const BillReportScreen: React.FC = () => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'transactions' },
           () => {
-            fetchTodayReport();
+            fetchReport(selectedDate);
           }
         )
         .subscribe();
@@ -36,15 +56,19 @@ export const BillReportScreen: React.FC = () => {
       return () => {
         subscription.unsubscribe();
       };
-    }, [])
+    }, [navigation, selectedDate])
   );
 
-  const fetchTodayReport = async () => {
+  // Added for feature 1: Fetch report for selected date
+  const fetchReport = async (date: Date) => {
     try {
       setLoading(true);
-      const { start, end } = getTodayStartEnd();
+      const TIMEZONE = 'Asia/Kolkata';
+      const zonedDate = utcToZonedTime(date, TIMEZONE);
+      const start = zonedTimeToUtc(startOfDay(zonedDate), TIMEZONE).toISOString();
+      const end = zonedTimeToUtc(endOfDay(zonedDate), TIMEZONE).toISOString();
 
-      // Fetch today's transactions
+      // Fetch transactions for selected date
       const { data: txns, error: txnError } = await supabase
         .from('transactions')
         .select('*')
@@ -76,6 +100,8 @@ export const BillReportScreen: React.FC = () => {
         gpayTotal,
         transactionCount: txns?.length || 0,
       });
+
+      console.log(`✓ Bill Report loaded for ${formatDate(date)}`);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to load report');
     } finally {
@@ -84,12 +110,40 @@ export const BillReportScreen: React.FC = () => {
     }
   };
 
+  // Added for feature 1: Handle date picker change
+  const handleDateChange = (event: any, date?: Date) => {
+    setShowDatePicker(false);
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchTodayReport();
+    fetchReport(selectedDate);
   };
 
   const difference = stats.cashTotal - stats.gpayTotal;
+
+  // Added for feature 8: Filter transactions by payment mode
+  const filteredTransactions = 
+    paymentFilter === 'all' 
+      ? transactions 
+      : transactions.filter((txn) => txn.payment_mode === paymentFilter);
+
+  // Added for feature 8: Calculate filtered stats
+  const filteredStats = {
+    totalSales: filteredTransactions.reduce((sum, txn) => sum + txn.total_amount, 0),
+    cashTotal: filteredTransactions
+      .filter((txn) => txn.payment_mode === 'cash')
+      .reduce((sum, txn) => sum + txn.total_amount, 0),
+    gpayTotal: filteredTransactions
+      .filter((txn) => txn.payment_mode === 'gpay')
+      .reduce((sum, txn) => sum + txn.total_amount, 0),
+    transactionCount: filteredTransactions.length,
+  };
+
+  const filteredDifference = filteredStats.cashTotal - filteredStats.gpayTotal;
 
   return (
     <ScrollView
@@ -97,22 +151,47 @@ export const BillReportScreen: React.FC = () => {
       contentContainerStyle={styles.content}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
     >
+      {/* Added for feature 1: Date picker modal */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="spinner"
+          onChange={handleDateChange}
+        />
+      )}
+
       {/* Summary Cards */}
       <Card style={styles.card}>
         <Card.Content>
-          <Text style={styles.dateLabel}>Today's Summary</Text>
+          {/* Added for feature 1: Display selected date in header */}
+          <Text style={styles.dateLabel}>{formatDate(selectedDate)} Summary</Text>
+          <Divider style={styles.divider} />
+
+          {/* Added for feature 8: Payment mode filter */}
+          <Text style={styles.filterLabel}>Filter by Type:</Text>
+          <SegmentedButtons
+            value={paymentFilter}
+            onValueChange={(value) => setPaymentFilter(value as 'all' | 'cash' | 'gpay')}
+            buttons={[
+              { value: 'all', label: 'All' },
+              { value: 'cash', label: 'Cash' },
+              { value: 'gpay', label: 'GPay' },
+            ]}
+            style={styles.filterSegments}
+          />
           <Divider style={styles.divider} />
 
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <Text style={styles.statLabel}>Total Sales</Text>
               <Text style={[styles.statValue, { color: colors.primary }]}>
-                {formatCurrency(stats.totalSales)}
+                {formatCurrency(filteredStats.totalSales)}
               </Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statLabel}>Transactions</Text>
-              <Text style={styles.statValue}>{stats.transactionCount}</Text>
+              <Text style={styles.statValue}>{filteredStats.transactionCount}</Text>
             </View>
           </View>
 
@@ -122,13 +201,13 @@ export const BillReportScreen: React.FC = () => {
             <View style={styles.statItem}>
               <Text style={styles.statLabel}>Cash</Text>
               <Text style={[styles.statValue, { color: colors.success }]}>
-                {formatCurrency(stats.cashTotal)}
+                {formatCurrency(filteredStats.cashTotal)}
               </Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statLabel}>GPay</Text>
               <Text style={[styles.statValue, { color: colors.secondary }]}>
-                {formatCurrency(stats.gpayTotal)}
+                {formatCurrency(filteredStats.gpayTotal)}
               </Text>
             </View>
           </View>
@@ -140,14 +219,14 @@ export const BillReportScreen: React.FC = () => {
             <Text
               style={[
                 styles.reconValue,
-                { color: difference >= 0 ? colors.success : colors.error },
+                { color: filteredDifference >= 0 ? colors.success : colors.error },
               ]}
             >
-              {formatCurrency(Math.abs(difference))}
+              {formatCurrency(Math.abs(filteredDifference))}
             </Text>
             <Text style={styles.reconNote}>
-              {difference > 0
-                ? '₹' + Math.abs(difference).toFixed(0) + ' more cash'
+              {filteredDifference > 0
+                ? '₹' + Math.abs(filteredDifference).toFixed(0) + ' more cash'
                 : 'Extra payment received'}
             </Text>
           </View>
@@ -156,15 +235,15 @@ export const BillReportScreen: React.FC = () => {
 
       {/* Transactions List */}
       <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>Transactions ({stats.transactionCount})</Text>
+        <Text style={styles.listTitle}>Transactions ({filteredTransactions.length})</Text>
       </View>
 
       {loading ? (
         <ActivityIndicator style={styles.loader} animating size="large" color={colors.primary} />
-      ) : transactions.length === 0 ? (
+      ) : filteredTransactions.length === 0 ? (
         <Card style={styles.emptyCard}>
           <Card.Content>
-            <Text style={styles.emptyText}>No transactions today</Text>
+            <Text style={styles.emptyText}>No transactions {paymentFilter !== 'all' ? 'for selected filter' : 'today'}</Text>
           </Card.Content>
         </Card>
       ) : (
@@ -178,7 +257,7 @@ export const BillReportScreen: React.FC = () => {
             <DataTable.Title style={styles.col4}>Mode</DataTable.Title>
           </DataTable.Header>
 
-          {transactions.map((txn) => (
+          {filteredTransactions.map((txn) => (
             <DataTable.Row key={txn.id} style={styles.tableRow}>
               <DataTable.Cell style={styles.col1}>
                 <Text style={styles.cellText}>{txn.bill_type}</Text>
@@ -229,6 +308,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     marginBottom: spacing.sm,
+  },
+  // Added for feature 8: Filter label and segments styling
+  filterLabel: {
+    fontSize: 12,
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  filterSegments: {
+    marginBottom: spacing.md,
   },
   divider: {
     backgroundColor: colors.border,

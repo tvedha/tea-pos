@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Modal, FlatList } from 'react-native';
-import { Button, Card, Text, TextInput, Snackbar, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
-import { supabase } from '../services/supabase';
+import React, { useState } from 'react';
+import { Alert, FlatList, Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Button, Card, IconButton, Searchbar, Snackbar, Text, TextInput } from 'react-native-paper';
 import { colors, spacing } from '../constants/theme';
+import { supabase } from '../services/supabase';
 import { Product } from '../types/database';
 
 export const ProductsScreen: React.FC = () => {
@@ -12,6 +12,8 @@ export const ProductsScreen: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState({ visible: false, message: '' });
+  // Added for feature 2: Search functionality
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -133,6 +135,12 @@ export const ProductsScreen: React.FC = () => {
     ]);
   };
 
+  // Added for feature 2: Filter products based on search query
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -148,6 +156,14 @@ export const ProductsScreen: React.FC = () => {
         </Button>
       </View>
 
+      {/* Added for feature 2: Search bar for products */}
+      <Searchbar
+        placeholder="Search by name or category..."
+        onChangeText={setSearchQuery}
+        value={searchQuery}
+        style={styles.searchBar}
+      />
+
       {/* Product List */}
       {loading ? (
         <ActivityIndicator
@@ -156,13 +172,13 @@ export const ProductsScreen: React.FC = () => {
           size="large"
           color={colors.primary}
         />
-      ) : products.length === 0 ? (
+      ) : filteredProducts.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No products yet</Text>
+          <Text style={styles.emptyText}>{searchQuery ? 'No products found' : 'No products yet'}</Text>
         </View>
       ) : (
         <FlatList
-          data={products}
+          data={filteredProducts}
           scrollEnabled={true}
           contentContainerStyle={styles.listContent}
           renderItem={({ item: product }) => (
@@ -306,6 +322,12 @@ const styles = StyleSheet.create({
   addButtonLabel: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  // Added for feature 2: Search bar styling
+  searchBar: {
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+    backgroundColor: colors.surface,
   },
   loader: {
     marginVertical: spacing.xl,
