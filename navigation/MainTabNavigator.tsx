@@ -1,24 +1,23 @@
-import React from 'react';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useWindowDimensions, TouchableOpacity } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import React from 'react';
+import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import { colors } from '../constants/theme';
 
 // Screens
-import { DashboardScreen } from '../screens/DashboardScreen';
-import { QuickBillScreen } from '../screens/QuickBillScreen';
-import { ItemWiseBillScreen } from '../screens/ItemWiseBillScreen';
 import { BillReportScreen } from '../screens/BillReportScreen';
-import { ProductsScreen } from '../screens/ProductsScreen';
 import { CustomersScreen } from '../screens/CustomersScreen';
+import { DashboardScreen } from '../screens/DashboardScreen';
+import { ItemWiseBillScreen } from '../screens/ItemWiseBillScreen';
+import { ProductsScreen } from '../screens/ProductsScreen';
+import { QuickBillScreen } from '../screens/QuickBillScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { CustomDrawerContent } from './DrawerContent';
 
 const Drawer = createDrawerNavigator();
 const Tab = createBottomTabNavigator();
 
-// Tab Navigator
 const TabNavigator = () => (
   <Tab.Navigator
     screenOptions={{
@@ -27,25 +26,41 @@ const TabNavigator = () => (
       tabBarStyle: { height: 60, paddingBottom: 10 },
     }}
   >
+     <Tab.Screen 
+      name="DashboardTab" 
+      component={DashboardScreen} 
+      options={{ 
+        title: 'Dashboard',
+        tabBarIcon: ({color}) => <MaterialCommunityIcons name="view-dashboard" color={color} size={24}/> 
+      }}
+    />
     <Tab.Screen 
-      name="QuickBill" 
+      name="QuickBillTab" 
       component={QuickBillScreen} 
-      options={{ tabBarIcon: ({color}) => <MaterialCommunityIcons name="lightning-bolt" color={color} size={24}/> }}
+      options={{ 
+        title: 'Quick Bill',
+        tabBarIcon: ({color}) => <MaterialCommunityIcons name="lightning-bolt" color={color} size={24}/> 
+      }}
     />
     <Tab.Screen 
-      name="ItemWise" 
+      name="ItemWiseTab" 
       component={ItemWiseBillScreen} 
-      options={{ tabBarIcon: ({color}) => <MaterialCommunityIcons name="basket" color={color} size={24}/> }}
+      options={{ 
+        title: 'Item Wise',
+        tabBarIcon: ({color}) => <MaterialCommunityIcons name="basket" color={color} size={24}/> 
+      }}
     />
     <Tab.Screen 
-      name="Report" 
+      name="ReportTab" 
       component={BillReportScreen} 
-      options={{ tabBarIcon: ({color}) => <MaterialCommunityIcons name="chart-box" color={color} size={24}/> }}
+      options={{ 
+        title: 'Reports',
+        tabBarIcon: ({color}) => <MaterialCommunityIcons name="chart-box" color={color} size={24}/> 
+      }}
     />
   </Tab.Navigator>
 );
 
-// Main Drawer
 export const MainTabNavigator = () => {
   const { width } = useWindowDimensions();
 
@@ -56,7 +71,7 @@ export const MainTabNavigator = () => {
         headerShown: true,
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.primary,
-        drawerStyle: { width: width * 0.75 }, // Sidebar width fixed
+        drawerStyle: { width: width * 0.75 },
         drawerType: 'front',
         headerLeft: () => (
           <TouchableOpacity 
@@ -69,7 +84,11 @@ export const MainTabNavigator = () => {
       })}
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-      <Drawer.Screen name="Billing" component={TabNavigator} />
+      <Drawer.Screen 
+        name="BillingGroup" 
+        component={TabNavigator} 
+        options={{ title: 'Billing & Reports' }} 
+      />
       <Drawer.Screen name="Products" component={ProductsScreen} />
       <Drawer.Screen name="Customers" component={CustomersScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />

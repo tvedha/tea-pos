@@ -1,18 +1,17 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { 
-  Drawer as PaperDrawer, 
-  Avatar, 
-  Text, 
-  Divider, 
-  useTheme,
-  Surface,
-  TouchableRipple
-} from 'react-native-paper';
-import { 
-  DrawerContentComponentProps, 
-  DrawerContentScrollView 
+import {
+  DrawerContentComponentProps,
+  DrawerContentScrollView
 } from '@react-navigation/drawer';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import {
+  Avatar,
+  Divider,
+  Drawer as PaperDrawer,
+  Surface,
+  Text,
+  useTheme
+} from 'react-native-paper';
 import { colors, spacing } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext'; // Added back
 
@@ -35,7 +34,6 @@ export const CustomDrawerContent = (props: DrawerContentComponentProps) => {
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: 0 }}>
         
-        {/* Header Section with User Info */}
         <Surface style={styles.headerSection} elevation={1}>
           <Avatar.Icon 
             size={54} 
@@ -58,33 +56,28 @@ export const CustomDrawerContent = (props: DrawerContentComponentProps) => {
             <PaperDrawer.Item
               icon="view-dashboard"
               label="Dashboard"
-              active={activeRouteName === 'Dashboard'}
-              onPress={() => navigation.navigate('Dashboard')}
-              style={styles.drawerItem}
+              onPress={() => navigation.navigate('BillingGroup', { screen: 'DashboardTab' })}
             />
             <PaperDrawer.Item
               icon="calculator"
               label="Quick Bill"
-              active={activeRouteName === 'BillTabNavigator'}
-              onPress={() => navigation.navigate('Billing', { screen: 'QuickBill' })}
-              style={styles.drawerItem}
+              onPress={() => navigation.navigate('BillingGroup', { screen: 'QuickBillTab' })}
             />
+            <PaperDrawer.Item
+              icon="coffee"
+              label="Item Wise Bill"
+              onPress={() => navigation.navigate('BillingGroup', { screen: 'ItemWiseTab' })}
+            />
+          </PaperDrawer.Section>
+          <Divider style={styles.divider} />
+
+
+        <PaperDrawer.Section title="Masters" showDivider={false}>
             <PaperDrawer.Item
               icon="food-outline"
               label="Products"
               active={activeRouteName === 'Products'}
               onPress={() => navigation.navigate('Products')}
-              style={styles.drawerItem}
-            />
-          </PaperDrawer.Section>
-
-          <Divider style={styles.divider} />
-
-          <PaperDrawer.Section title="Analytics" showDivider={false}>
-            <PaperDrawer.Item
-              icon="file-chart"
-              label="Reports"
-              onPress={() => navigation.navigate('Billing', { screen: 'BillReport' })}
               style={styles.drawerItem}
             />
             <PaperDrawer.Item
@@ -95,6 +88,17 @@ export const CustomDrawerContent = (props: DrawerContentComponentProps) => {
               style={styles.drawerItem}
             />
           </PaperDrawer.Section>
+                    <Divider style={styles.divider} />
+
+
+          <PaperDrawer.Section title="Analytics" showDivider={false}>
+            <PaperDrawer.Item
+              icon="file-chart"
+              label="Reports"
+              onPress={() => navigation.navigate('BillingGroup', { screen: 'ReportTab' })}
+            />
+          </PaperDrawer.Section>
+
 
           <Divider style={styles.divider} />
 

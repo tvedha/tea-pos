@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, Card, Button, Snackbar } from 'react-native-paper';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { supabase } from '../services/supabase';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Card, IconButton, Snackbar, Text } from 'react-native-paper';
 import { colors, spacing } from '../constants/theme';
-import { formatCurrency, getTodayStartEnd } from '../utils/dateUtils';
+import { supabase } from '../services/supabase';
 import { DailyStats } from '../types/database';
-import { IconButton } from 'react-native-paper';
+import { formatCurrency, getTodayStartEnd } from '../utils/dateUtils';
 
 export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
@@ -138,10 +137,9 @@ export const DashboardScreen: React.FC = () => {
         <Button
           mode="contained"
           style={styles.button}
-          labelStyle={styles.buttonLabel}
           onPress={() => {
-            console.log('Quick Bill pressed - Navigating to BillTabNavigator');
-            navigation.navigate('Billing', { screen: 'QuickBill' });
+            // Correct way to navigate to the nested Quick Bill tab
+            navigation.navigate('BillingGroup', { screen: 'QuickBillTab' });
           }}
         >
           Quick Bill
@@ -149,10 +147,9 @@ export const DashboardScreen: React.FC = () => {
         <Button
           mode="contained"
           style={styles.button}
-          labelStyle={styles.buttonLabel}
           onPress={() => {
-            console.log('View Report pressed - Navigating to BillReport');
-            navigation.navigate('Billing', { screen: 'BillReport' });
+            // Correct way to navigate to the nested Report tab
+            navigation.navigate('BillingGroup', { screen: 'ReportTab' });
           }}
         >
           View Report
